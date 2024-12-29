@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-width: 400px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select, button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            font-weight: bold;
+            color: green;
+        }
+
+        #logs {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #logs li {
+            background-color: #fff;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Calculator</h1>
+    <form id="calc-form">
+        <label for="operand1">Operand 1:</label>
+        <input type="number" id="operand1" name="operand1" required>
+
+        <label for="operation">Operation:</label>
+        <select id="operation" name="operation">
+            <option value="add">Add</option>
+            <option value="subtract">Subtract</option>
+            <option value="multiply">Multiply</option>
+            <option value="divide">Divide</option>
+        </select>
+
+        <label for="operand2">Operand 2:</label>
+        <input type="number" id="operand2" name="operand2" required>
+
+        <button type="submit">Calculate</button>
+    </form>
+
+    <h2>Result</h2>
+    <p id="result"></p>
+
+    <h2>Logs</h2>
+    <button id="fetch-logs">Fetch Logs</button>
+    <ul id="logs"></ul>
+
+    <script>
+        const form = document.getElementById('calc-form');
+        const resultField = document.getElementById('result');
+        const logsButton = document.getElementById('fetch-logs');
+        const logsList = document.getElementById('logs');
+
+        // Handle form submission for calculation
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const operand1 = document.getElementById('operand1').value;
+            const operation = document.getElementById('operation').value;
+            const operand2 = document.getElementById('operand2').value;
+
+            // Validate inputs
+            if (!operand1 || !operand2 || isNaN(operand1) || isNaN(operand2)) {
+                resultField.textContent = 'Error: Please enter valid numbers.';
+                resultField.className = 'error';
+                return;
+            }
+
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ operand1, operation, operand2 })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultField.textContent = `Result: ${data.result}`;
+                    resultField.className = '';
+                } else {
+                    resultField.textContent = `Error: ${data.error}`;
+                    resultField.className = 'error';
+                }
+            } catch (error) {
+                resultField.textContent = `Error: ${error.message}`;
+                resultField.className = 'error';
+            }
+        });
+
+        // Handle fetching logs
+        logsButton.addEventListener('click', async () => {
+            logsList.innerHTML = '<li>Loading...</li>';
+            try {
+                const response = await fetch('/logs');
+                const logs = await response.json();
+
+                if (response.ok) {
+                    logsList.innerHTML = '';
+                    logs.forEach(log => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `Operation: ${log[1]}, Operands: ${log[2]} and ${log[3]}, Result: ${log[4]}, Timestamp: ${log[5]}`;
+                        logsList.appendChild(listItem);
+                    });
+                } else {
+                    logsList.innerHTML = `<li>Error: ${logs.error}</li>`;
+                }
+            } catch (error) {
+                logsList.innerHTML = `<li>Error: ${error.message}</li>`;
+            }
+        });
+    </script>
+</body>
+</html>

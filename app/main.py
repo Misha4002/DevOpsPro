@@ -41,6 +41,29 @@ def calculate():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/logs', methods=['GET'])
+def get_logs():
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="calculator_db",
+            user="mishalapko",
+            password=""  # Add your password if required
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM calculation_logs ORDER BY timestamp DESC;")
+        logs = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(logs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 def log_calculation(operation, operand1, operand2, result):
     try:
         conn = psycopg2.connect(
@@ -62,6 +85,7 @@ def log_calculation(operation, operand1, operand2, result):
         conn.close()
     except Exception as e:
         print(f"Error logging calculation: {e}")
+
 
 
 if __name__ == '__main__':
